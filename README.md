@@ -1,5 +1,9 @@
 # PalmCall
 
+<p align="center">
+  <img src="image.png" alt="PalmCall wearable camera prototype on a wrist" width="900">
+</p>
+
 **Show your palm. Reach someone who can help.**
 
 PalmCall is a wearable accessibility prototype for moments when reaching for a
