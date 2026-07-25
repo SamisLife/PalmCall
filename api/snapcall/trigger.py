@@ -24,7 +24,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Callable
 
-from . import demo_data, flows
+from . import demo_data, flows, notify
 from .callwright import CallEvent, CallwrightClient
 
 log = logging.getLogger("snapcall.trigger")
@@ -54,6 +54,7 @@ class TriggerHub:
         cancel_seconds: float = 3.0,
         on_state: Callable[[HubStatus], None] | None = None,
         buzz: Callable[[str], None] | None = None,
+        speak: Callable[[str], None] | None = None,
     ):
         self.client = client
         self.contacts = contacts
@@ -64,6 +65,7 @@ class TriggerHub:
         # Left as a no-op until the BLE side lands; the state machine does not
         # care whether anything is actually vibrating.
         self.buzz = buzz or (lambda pattern: log.info("BUZZ: %s", pattern))
+        self.speak = speak or notify.speak
 
         self.status = HubStatus()
         self._lock = threading.Lock()
@@ -148,12 +150,15 @@ class TriggerHub:
             if last and last.transcript:
                 self.status.transcript = last.transcript.splitlines()
 
+            # Closing the loop is what makes this a communication device rather
+            # than a panic button. Buzz says whether it worked; speech says what
+            # was actually agreed, which is the part the wearer cares about.
+            reached_name = report.reached_via.name if report.reached_via else None
+            self.speak(notify.announce_outcome(reached_name, last.summary if last else None))
+
             if report.reached:
-                # One long buzz = your errand actually happened. This closing of
-                # the loop is what makes it a communication device rather than a
-                # panic button.
                 self.buzz("success")
-                self._set_state("done", f"reached {report.reached_via.name}")
+                self._set_state("done", f"reached {reached_name}")
             else:
                 self.buzz("failure")
                 self._set_state("done", f"nobody reached ({self.status.outcome})")
