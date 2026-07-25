@@ -20,35 +20,37 @@ call layer to add a branch — add a brief builder.
 
 ## Layout
 
-One Python project at the repo root. Vision and the call layer are the same
-program — the detector calls straight into the call flow — so they share a
-`pyproject.toml`, a `.env`, and a virtualenv.
+`backend/` is the whole laptop side — one Python project. Vision and the call
+layer are the same program (the detector calls straight into the call flow), so
+they share a `pyproject.toml`, a `.env`, and a virtualenv. `firmware/` is the
+device side and shares nothing with it.
 
 ```
-CLAUDE.md            this file — repo-wide
-pyproject.toml       uv project root — run everything from here
-.env                 gitignored; the Callwright key lives here
+CLAUDE.md              this file — repo-wide
 .claude/skills/
-  callwright/        vendored upstream skill (the raw API reference)
-  snapcall/          how to work in THIS repo
-snapcall/
-  config.py          env loading + the dial allow-list (safety)
-  callwright.py      API client: place / follow / answer / result, outcomes
-  briefs.py          brief builders — emergency_brief, errand_brief
-  answerer.py        mid-call ask_user answering, as a fallback chain
-  flows.py           escalation ladder + end-to-end flows
-  trigger.py         the seam: gesture in -> cancel window -> call out
-  server.py          POST /trigger endpoint + live dashboard
-  demo_data.py       persona + what the device actually knows
-  cli.py             entry points
-  vision/            laptop-side camera pipeline (opt-in extra)
-    detector.py      MediaPipe gesture recognition + alert state machine
-    stream_viewer.py MJPEG reader for the ESP32 /stream endpoint
-    dispatch.py      gesture -> TriggerHub (threaded, never blocks the camera)
-    models/          gesture_recognizer.task
-firmware/            ESP32 (Seeed XIAO ESP32S3 Sense) — Arduino sketch
-  snapcall_cam/      camera capture + MJPEG /stream server
-    secrets.h        gitignored; WiFi creds. Copy secrets.example.h.
+  callwright/          vendored upstream skill (the raw API reference)
+  snapcall/            how to work in THIS repo
+backend/               the laptop: camera pipeline + call layer
+  pyproject.toml       uv project root — run commands from here
+  .env                 gitignored; the Callwright key lives here
+  snapcall/
+    config.py          env loading + the dial allow-list (safety)
+    callwright.py      API client: place / follow / answer / result, outcomes
+    briefs.py          brief builders — emergency_brief, errand_brief
+    answerer.py        mid-call ask_user answering, as a fallback chain
+    flows.py           escalation ladder + end-to-end flows
+    trigger.py         the seam: gesture in -> cancel window -> call out
+    server.py          POST /trigger endpoint + live dashboard
+    demo_data.py       persona + what the device actually knows
+    cli.py             entry points
+    vision/            camera pipeline (opt-in extra)
+      detector.py      MediaPipe gesture recognition + alert state machine
+      stream_viewer.py MJPEG reader for the ESP32 /stream endpoint
+      dispatch.py      gesture -> TriggerHub (threaded, never blocks the camera)
+      models/          gesture_recognizer.task
+firmware/              ESP32 (Seeed XIAO ESP32S3 Sense) — Arduino sketch
+  snapcall_cam/        camera capture + MJPEG /stream server
+    secrets.h          gitignored; WiFi creds. Copy secrets.example.h.
 ```
 
 Vision deps (mediapipe, opencv) are an **optional extra** — they're large, and
@@ -75,9 +77,10 @@ It never needs to know Callwright exists.
 
 ## Commands
 
-All from the repo root.
+All from `backend/`.
 
 ```sh
+cd backend
 # the full demo: camera -> gesture -> call, with dashboard on :8787
 uv run python -m snapcall.vision.detector --address <esp32-ip>
 

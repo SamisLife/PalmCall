@@ -6,11 +6,11 @@ version: 0.1.0
 
 # SnapCall — working in this repo
 
-Wearable gesture → real phone call. `api/snapcall/callwright.py` wraps the
+Wearable gesture → real phone call. `backend/snapcall/callwright.py` wraps the
 Callwright API; everything else composes on top of it.
 
-**All Python lives in `api/`** — its own uv project, `.env`, and virtualenv. Run
-commands from there (or `uv run --directory api ...` from the repo root).
+**All Python lives in `backend/`** — its own uv project, `.env`, and virtualenv. Run
+commands from there (or `uv run --directory backend ...` from the repo root).
 
 **Before doing anything that dials: dry run is the default and must stay that
 way.** `--live` is the only switch that rings a phone.
@@ -18,7 +18,7 @@ way.** `--live` is the only switch that rings a phone.
 ## Place a test call
 
 ```sh
-cd api
+cd backend
 uv run python -m snapcall.cli preflight       # ALWAYS run this first
 uv run python -m snapcall.cli emergency       # simulated, incl. a mid-call question
 uv run python -m snapcall.cli errand

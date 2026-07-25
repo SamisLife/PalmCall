@@ -35,16 +35,23 @@ floor in the kitchen" — during the call.
 ## Quickstart
 
 ```sh
-cd api
+cd backend
 uv sync
 cp .env.example .env          # paste your Callwright key
 uv run python -m snapcall.cli preflight
 uv run python -m snapcall.cli emergency     # dry run — nothing dials
 ```
 
-`api/` is the Callwright integration layer and is self-contained — its own
-`pyproject.toml`, `.env`, and virtualenv. Wearable and dashboard code live in
-sibling folders and don't share this environment.
+`backend/` is the whole laptop side — camera pipeline and call layer in one
+self-contained uv project. `firmware/` is the ESP32 sketch and shares nothing
+with it.
+
+The real thing, camera and all:
+
+```sh
+uv sync --extra vision
+uv run python -m snapcall.vision.detector --address <esp32-ip>
+```
 
 Everything is dry run by default and simulates the full event stream, including
 a mid-call question. Pass `--live` to actually ring a phone.
