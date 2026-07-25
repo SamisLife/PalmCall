@@ -62,15 +62,14 @@ def emergency_brief(
             "",
             "Then ask: can you get to her now, and how long will it take?",
             "",
-            "If they ask what happened, what is wrong, or how serious it is: say honestly that we "
-            "do not know the nature of the emergency — only that she asked for help — and that this "
-            "is exactly why someone needs to go to her. Do not speculate about what might have "
-            "happened, and do not downplay it.",
+            "If they ask what happened, what is wrong, where she is, or whether she is hurt: we do "
+            "not know, and you must say so plainly. The system detects the signal and nothing "
+            "else. Add that this is exactly why someone needs to go to her. Never speculate about "
+            "what might have happened, and never downplay it to make them feel better.",
             "",
-            "If they ask anything else — where she is, whether she is moving, her address, her "
-            "medications — do not guess and do not reassure them with invented detail. Ask the "
-            "operator system and relay exactly what it tells you. If it has nothing, say plainly "
-            "that we don't know.",
+            "If they ask for something on file — her address, her medications, her doctor, her "
+            "date of birth — ask the operator system and relay exactly what it tells you. If it "
+            "has nothing, say we don't know rather than guessing.",
             "",
             "You are not a medical professional. Do not assess how serious this is. If they cannot "
             "go, tell them to call 911.",

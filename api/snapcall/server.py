@@ -3,10 +3,9 @@
 Deliberately stdlib-only so there is no dependency for the firmware side to
 care about, and deliberately tiny — this is a seam, not an application.
 
-    POST /trigger   {"source": "band"}                 -> arm + place the call
-    POST /context   {"scene": "...", "movement": "..."} -> feed the answerer
-    GET  /state                                         -> current status (dashboard)
-    GET  /                                              -> one-page live view
+    POST /trigger   {"source": "band"}   -> arm + place the call
+    GET  /state                          -> current status (dashboard)
+    GET  /                               -> one-page live view
 
 The ESP32 does not need to know Callwright exists. It posts to /trigger and
 this side owns everything after that.
@@ -39,7 +38,7 @@ PAGE = """<!doctype html><meta charset=utf-8><title>SnapCall</title>
  <div class=state id=s>idle</div>
  <div class=detail id=d></div>
  <pre id=t></pre>
- <div class=hint>POST /trigger to fire &middot; POST /context to add scene info</div>
+ <div class=hint>POST /trigger to fire</div>
 </main>
 <script>
 async function tick(){
@@ -105,13 +104,6 @@ def make_handler(hub: TriggerHub):
             if self.path.startswith("/trigger"):
                 action = hub.snap(source=body.get("source", "http"))
                 self._json(202, {"action": action, "state": hub.status.state})
-            elif self.path.startswith("/context"):
-                scene = body.get("scene", "")
-                if not scene:
-                    self._json(422, {"error": "scene is required"})
-                    return
-                hub.set_context(scene, body.get("movement"))
-                self._json(200, {"ok": True})
             else:
                 self._json(404, {"error": "not found"})
 

@@ -24,7 +24,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Callable
 
-from . import demo_data, flows, notify
+from . import demo_data, flows
 from .callwright import CallEvent, CallwrightClient
 
 log = logging.getLogger("snapcall.trigger")
@@ -54,7 +54,6 @@ class TriggerHub:
         cancel_seconds: float = 3.0,
         on_state: Callable[[HubStatus], None] | None = None,
         buzz: Callable[[str], None] | None = None,
-        speak: Callable[[str], None] | None = None,
     ):
         self.client = client
         self.contacts = contacts
@@ -65,7 +64,6 @@ class TriggerHub:
         # Left as a no-op until the BLE side lands; the state machine does not
         # care whether anything is actually vibrating.
         self.buzz = buzz or (lambda pattern: log.info("BUZZ: %s", pattern))
-        self.speak = speak or notify.speak
 
         self.status = HubStatus()
         self._lock = threading.Lock()
@@ -95,12 +93,6 @@ class TriggerHub:
         self.buzz("confirm")
         threading.Thread(target=self._run, args=(source,), daemon=True).start()
         return "armed"
-
-    def set_context(self, scene: str, movement: str | None = None) -> None:
-        """Camera branch reporting in. Safe to call mid-call — the answerer
-        reads LIVE_CONTEXT at question time, not at dial time."""
-        demo_data.set_camera_context(scene, movement)
-        log.info("live context updated: %s", scene)
 
     # --- internals ----------------------------------------------------------
 
@@ -151,10 +143,9 @@ class TriggerHub:
                 self.status.transcript = last.transcript.splitlines()
 
             # Closing the loop is what makes this a communication device rather
-            # than a panic button. Buzz says whether it worked; speech says what
-            # was actually agreed, which is the part the wearer cares about.
+            # than a panic button — the wearer has to learn whether anyone is
+            # actually coming.
             reached_name = report.reached_via.name if report.reached_via else None
-            self.speak(notify.announce_outcome(reached_name, last.summary if last else None))
 
             if report.reached:
                 self.buzz("success")

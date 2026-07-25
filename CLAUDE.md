@@ -39,17 +39,28 @@ api/                 the Callwright integration layer (Python)
     briefs.py        brief builders — emergency_brief, errand_brief
     answerer.py      mid-call ask_user answering, as a fallback chain
     flows.py         escalation ladder + end-to-end flows
-    demo_data.py     fake persona (Margaret Chen) + live device context
+    trigger.py       the seam: snap in -> cancel window -> call out
+    server.py        POST /trigger endpoint + live dashboard
+    demo_data.py     fake persona (Margaret Chen) + what the device knows
     cli.py           entry points
 firmware/            ESP32 (Seeed XIAO ESP32S3 Sense) — Arduino sketch
   snapcall_cam/      camera capture + WiFi server
     secrets.h        gitignored; WiFi creds. Copy secrets.example.h.
 ```
 
-The camera is **event-triggered only** — it wakes on the emergency branch,
-grabs frames, and a VLM captions them. Those captions feed
-`demo_data.LIVE_CONTEXT`, which is what the mid-call answerer reads when a
-caregiver asks "where is she?". That is the loop that closes firmware → API.
+**The camera is a gesture detector, not an observer.** It is low resolution and
+its only job is recognising a hand signal — a snap. It cannot report location,
+posture, or condition, so nothing in this codebase claims otherwise. A question
+like "where is she?" correctly falls through to "I don't have that information",
+because we genuinely do not.
+
+The firmware's entire contract with the API side is one HTTP call:
+
+```
+POST http://<laptop-ip>:8787/trigger   {"source": "band"}
+```
+
+It never needs to know Callwright exists.
 
 ## Commands
 

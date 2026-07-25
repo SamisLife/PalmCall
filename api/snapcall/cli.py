@@ -36,10 +36,7 @@ def _print_event(event: CallEvent) -> None:
 
 
 def _build_answerer(use_llm: bool):
-    rungs = [
-        ans.live_context_rung(demo_data.get_live_context),
-        ans.profile_rung(demo_data.PROFILE),
-    ]
+    rungs = [ans.profile_rung(demo_data.PROFILE)]
     if use_llm:
         rungs.append(ans.llm_rung(demo_data.context_pack()))
     return ans.chain(*rungs)
@@ -130,9 +127,7 @@ def cmd_serve(client: CallwrightClient, args) -> int:
         print("No caregiver numbers. Set CAREGIVER_PRIMARY_PHONE in .env or pass --to.")
         return 1
     print(f"dashboard:  http://localhost:{args.port}")
-    print(f"fire it:    curl -X POST http://localhost:{args.port}/trigger")
-    print(f"add scene:  curl -X POST http://localhost:{args.port}/context "
-          f"-d '{{\"scene\":\"she is on the kitchen floor\"}}'\n")
+    print(f"fire it:    curl -X POST http://localhost:{args.port}/trigger\n")
     try:
         server.serve(hub, port=args.port)
     except KeyboardInterrupt:
@@ -197,12 +192,6 @@ def main(argv: list[str] | None = None) -> int:
     common.add_argument("--live", action="store_true", help="actually dial. Without this, nothing rings.")
     common.add_argument("--llm", action="store_true", help="add the LLM rung to the answerer chain")
     common.add_argument("--to", help="target phone, E.164")
-    common.add_argument(
-        "--camera",
-        action="store_true",
-        help="simulate the ESP32 camera having captioned the scene. Without it the agent "
-        "knows only that she asked for help — which is the truth for a bare snap.",
-    )
 
     parser = argparse.ArgumentParser(prog="snapcall", parents=[common])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -233,10 +222,6 @@ def main(argv: list[str] | None = None) -> int:
             setattr(args, name, None)
     if not hasattr(args, "port"):
         args.port = 8787
-
-    if args.camera:
-        demo_data.simulate_camera()
-        print("camera context ON — the agent can describe the scene if asked.\n")
 
     dry_run = not args.live
     if not dry_run:

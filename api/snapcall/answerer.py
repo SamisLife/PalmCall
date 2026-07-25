@@ -11,9 +11,13 @@ rung of the chain below terminates in that decline rather than raising.
 
 The chain is what makes the system degrade gracefully instead of failing:
 
-    live context (camera / sensors)  ->  profile lookup  ->  LLM  ->  decline
+    profile lookup  ->  LLM over the same facts  ->  truthful decline
 
 Drop any rung and the call still completes; you just get a thinner conversation.
+
+Note what is NOT here: anything about the current moment. The camera detects a
+hand gesture and nothing else, so "where is she?" has no source and correctly
+falls through to the decline.
 """
 
 from __future__ import annotations
@@ -86,37 +90,10 @@ DEFAULT_ALIASES: dict[str, list[str]] = {
 }
 
 
-# --- rung: live device context ----------------------------------------------
-
-
-def live_context_rung(get_context: Callable[[], dict[str, str]]) -> Rung:
-    """Answer from whatever the device knows right now.
-
-    `get_context` is called at question time, not at call time — that's the
-    point. The caregiver asks "where is she?" thirty seconds into the call and
-    we answer with the caption the camera produced after the alert fired.
-    """
-    triggers = {
-        "scene": ["where", "what do you see", "camera", "what happened", "which room", "what's going on", "position"],
-        "movement": ["moving", "conscious", "responsive", "awake", "breathing", "still", "alright", "ok"],
-        "detected": ["what triggered", "how do you know", "what did it detect", "fall", "why"],
-        "time": ["when", "how long", "what time"],
-    }
-
-    def rung(question: str) -> str | None:
-        lowered = question.lower()
-        context = get_context() or {}
-        # Answer EVERY part that matched, not just the first. Caregivers ask
-        # compound questions ("where is she, and is she conscious?") and a
-        # half-answer forces them to ask again on a call that is already tense.
-        matched = [
-            context[key]
-            for key, terms in triggers.items()
-            if key in context and any(term in lowered for term in terms)
-        ]
-        return " ".join(matched) if matched else None
-
-    return rung
+# There is deliberately no "live scene" rung. The camera is a gesture detector,
+# not an observer — it recognises a snap and cannot report location, posture or
+# condition. Questions about where she is or whether she is hurt fall through to
+# the decline, which is the correct answer, because we do not know.
 
 
 # --- rung: LLM over a context pack ------------------------------------------
