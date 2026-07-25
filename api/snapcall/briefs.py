@@ -48,19 +48,33 @@ def emergency_brief(
     """
     facts = [f"She triggered the alert at {_clock(now)}.", *(known_facts or [])]
 
+    # Written as one literal script rather than a numbered plan. Given steps,
+    # the agent delivers step one and yields the turn — so the caregiver hears
+    # "she needs immediate assistance" followed by silence, and has to drag the
+    # rest out of it. Handing it a single continuous line that ENDS on the
+    # question keeps the turn and makes the ask unmissable.
+    script = " ".join(
+        [
+            f"This is an urgent alert about {person_name}. She has requested immediate assistance.",
+            *facts,
+            "Can you get to her now, and how long will it take?",
+        ]
+    )
+
     return "\n".join(
         [
             f"URGENT. You are calling {caregiver_name}, the {relationship} of {person_name} and her "
             f"emergency contact.",
             "",
-            f'Say this first, before anything else: "This is an urgent alert about {person_name}. '
-            f'She has requested immediate assistance." People hang up on unknown numbers, so the '
-            f"reason has to land in the first few seconds.",
+            "Your FIRST turn must be all of the following, delivered in one go. Do not pause for a "
+            "response, do not wait to be asked, and do not hand the conversation back until you "
+            "have asked the question at the end:",
             "",
-            "Then, without waiting to be asked, give these facts:",
-            *[f"- {fact}" for fact in facts],
+            f'"{script}"',
             "",
-            "Then ask: can you get to her now, and how long will it take?",
+            "People hang up on unknown numbers, so this has to land in the first few seconds. If "
+            "they interrupt you partway, answer them briefly and then finish the rest — but always "
+            "end your turn on the question. Never leave them with a statement and silence.",
             "",
             "If they ask what happened, what is wrong, where she is, or whether she is hurt: we do "
             "not know, and you must say so plainly. The system detects the signal and nothing "
