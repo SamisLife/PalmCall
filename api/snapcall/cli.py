@@ -108,6 +108,54 @@ def cmd_emergency(client: CallwrightClient, args) -> int:
     return 0
 
 
+def _make_hub(client: CallwrightClient, args):
+    from . import trigger
+
+    contacts = [
+        trigger.flows.Contact("Sarah", args.to or config.CAREGIVER_PRIMARY_PHONE, "daughter"),
+        trigger.flows.Contact("David", config.CAREGIVER_BACKUP_PHONE, "neighbor"),
+    ]
+    contacts = [c for c in contacts if c.phone]
+    if not contacts:
+        return None
+    return trigger.TriggerHub(client, contacts, answerer=_build_answerer(args.llm))
+
+
+def cmd_serve(client: CallwrightClient, args) -> int:
+    """Run the endpoint the band posts into."""
+    from . import server
+
+    hub = _make_hub(client, args)
+    if hub is None:
+        print("No caregiver numbers. Set CAREGIVER_PRIMARY_PHONE in .env or pass --to.")
+        return 1
+    print(f"dashboard:  http://localhost:{args.port}")
+    print(f"fire it:    curl -X POST http://localhost:{args.port}/trigger")
+    print(f"add scene:  curl -X POST http://localhost:{args.port}/context "
+          f"-d '{{\"scene\":\"she is on the kitchen floor\"}}'\n")
+    try:
+        server.serve(hub, port=args.port)
+    except KeyboardInterrupt:
+        print("\nstopped")
+    return 0
+
+
+def cmd_listen(client: CallwrightClient, args) -> int:
+    """Keyboard stands in for the wristband — press Enter to snap."""
+    hub = _make_hub(client, args)
+    if hub is None:
+        print("No caregiver numbers. Set CAREGIVER_PRIMARY_PHONE in .env or pass --to.")
+        return 1
+    print("Press ENTER to snap.  Press ENTER again within 3s to cancel.  Ctrl-C to quit.\n")
+    try:
+        while True:
+            input()
+            print(f"  -> {hub.snap(source='keyboard')}")
+    except (KeyboardInterrupt, EOFError):
+        print("\nstopped")
+    return 0
+
+
 def cmd_errand(client: CallwrightClient, args) -> int:
     phone = args.to or config.ERRAND_PHONE
     if not phone:
@@ -161,6 +209,10 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("preflight", help="check key, credits, connectivity", parents=[common])
     sub.add_parser("emergency", help="caregiver alert with escalation", parents=[common])
+    sub.add_parser("listen", help="keyboard stands in for the band — ENTER to snap", parents=[common])
+
+    serve = sub.add_parser("serve", help="HTTP endpoint the band posts snaps into", parents=[common])
+    serve.add_argument("--port", type=int, default=8787)
 
     errand = sub.add_parser("errand", help="run an errand call", parents=[common])
     errand.add_argument("--business", default="Walgreens pharmacy")
@@ -179,6 +231,8 @@ def main(argv: list[str] | None = None) -> int:
     for name in ("business", "task", "brief"):
         if not hasattr(args, name):
             setattr(args, name, None)
+    if not hasattr(args, "port"):
+        args.port = 8787
 
     if args.camera:
         demo_data.simulate_camera()
@@ -194,6 +248,8 @@ def main(argv: list[str] | None = None) -> int:
         "emergency": cmd_emergency,
         "errand": cmd_errand,
         "raw": cmd_raw,
+        "serve": cmd_serve,
+        "listen": cmd_listen,
     }
     try:
         return handlers[args.command](client, args)
