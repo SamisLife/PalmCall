@@ -305,8 +305,13 @@ class CallwrightClient:
                     lines.append(line or "")
                     if time.monotonic() >= deadline:
                         break
-        except requests.exceptions.Timeout:
-            pass  # expected: the stream had nothing more to say inside `window`
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
+            # Expected: the stream had nothing more to say inside `window`.
+            # requests re-wraps a urllib3 read-timeout raised mid-stream as
+            # ConnectionError rather than Timeout, so BOTH have to be caught —
+            # catching only Timeout lets it escape from iter_lines().
+            # `lines` keeps whatever arrived before the stall.
+            pass
         return _parse_sse("\n".join(lines))
 
     def follow(
@@ -379,6 +384,16 @@ class CallwrightClient:
                     outcome = event.data.get("outcome_type") or event.data.get("type")
                     log.info("call ended: %s", outcome)
                     return outcome
+
+            # Belt and braces: the feed is not guaranteed to deliver an
+            # `outcome` event, and without this check a finished call would sit
+            # here until the 300s timeout with the demo frozen on screen. One
+            # cheap status read per ~5s window, well inside the rate limit.
+            status_payload = self._request("GET", f"/calls/{call_id}").json()
+            if status_payload.get("status") in TERMINAL_STATUSES:
+                outcome = status_payload.get("outcome_type")
+                log.info("call ended (via status): %s", outcome)
+                return outcome
 
             time.sleep(1)
 
