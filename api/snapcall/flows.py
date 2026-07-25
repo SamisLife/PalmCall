@@ -51,13 +51,11 @@ def emergency(
     contacts: list[Contact],
     *,
     person_name: str,
-    detected: str,
-    location: str,
     callback_number: str,
+    known_facts: list[str] | None = None,
     answerer: Callable[[str], str] | None = None,
     on_event: EventHook | None = None,
     sms_fallback: Callable[[str, str], None] | None = None,
-    extra_context: str = "",
 ) -> EscalationReport:
     """Work down the contact list until a human actually answers.
 
@@ -74,10 +72,8 @@ def emergency(
             person_name=person_name,
             caregiver_name=contact.name,
             relationship=contact.relationship,
-            detected=detected,
-            location=location,
             callback_number=callback_number,
-            extra_context=extra_context,
+            known_facts=known_facts,
         )
         try:
             result = client.call(contact.phone, brief, answerer=answerer, on_event=on_event)
@@ -94,9 +90,13 @@ def emergency(
         log.warning("did not reach %s (%s) — escalating", contact.name, result.outcome_type)
 
     if sms_fallback:
-        text = (
-            f"EMERGENCY: {person_name} triggered her wristband. Detected: {detected}. "
-            f"Location: {location}. Nobody answered the alert calls. Callback {callback_number}."
+        # Same honesty rule as the brief: state only what we know.
+        text = " ".join(
+            [
+                f"EMERGENCY: {person_name} asked for help via her SnapCall band.",
+                *(known_facts or []),
+                f"Nobody answered the alert calls. Callback {callback_number}.",
+            ]
         )
         for contact in contacts:
             if not contact.phone:

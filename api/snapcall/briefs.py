@@ -29,57 +29,51 @@ def emergency_brief(
     person_name: str,
     caregiver_name: str,
     relationship: str,
-    detected: str,
-    location: str,
     callback_number: str,
-    extra_context: str = "",
+    known_facts: list[str] | None = None,
     now: datetime | None = None,
 ) -> str:
-    """Alert a designated caregiver that the wearer triggered an emergency.
+    """Alert a designated caregiver that the wearer asked for help.
 
-    `detected` is what the system actually observed ("a fall-pattern impact
-    followed by no movement for 40 seconds"), not an inference. Keep the agent
-    honest — it should never claim a medical diagnosis.
+    `known_facts` is ONLY what the system actually observed. Pass none and the
+    agent says nothing beyond "she asked for help" — which is the honest base
+    case, because a snap gesture tells us a request was made and nothing else.
+    Position, posture and movement belong here only when a camera or sensor
+    genuinely produced them.
+
+    This is the line between a demo and a lie: the agent must never narrate
+    detail the hardware did not generate. Anything the caregiver asks beyond
+    these facts goes to the live answerer mid-call, so richer context can still
+    arrive during the call without being fabricated up front.
     """
-    lines = [
-        f"URGENT PERSONAL SAFETY CALL. You are calling {caregiver_name}, who is the {relationship} "
-        f"of {person_name} and is her designated emergency contact.",
-        "",
-        f"Open with EXACTLY this, immediately, before anything else: "
-        f"\"This is an urgent automated alert about {person_name}. She has triggered her emergency "
-        f"wristband and may need help right now.\" Say that first even if the person sounds confused "
-        f"or tries to interrupt — people hang up on unknown numbers, so the reason for the call must "
-        f"land in the first few seconds.",
-        "",
-        "Then give these facts, plainly and calmly:",
-        f"- The alert came in at {_clock(now)}.",
-        f"- What the device detected: {detected}.",
-        f"- Where she is: {location}.",
-        f"- {person_name} cannot use a phone herself. This alert was raised by a wearable device on "
-        f"her wrist, not by her speaking.",
-    ]
-    if extra_context:
-        lines.append(f"- Additional context: {extra_context}")
+    facts = [f"She triggered the alert at {_clock(now)}.", *(known_facts or [])]
 
-    lines += [
-        "",
-        "Then ask clearly: can you get to her now, and roughly how long will it take?",
-        "",
-        f"If {caregiver_name} asks anything you were not told — her exact position, whether she is "
-        f"conscious or moving, what the camera sees, her medications — DO NOT GUESS and DO NOT "
-        f"reassure them with invented detail. Use your ability to ask the operator system for the "
-        f"answer, then relay exactly what you are told. If the system says it does not know, say "
-        f"plainly that the information is not available.",
-        "",
-        f"IMPORTANT LIMITS: You are not a medical professional and must not diagnose, assess "
-        f"severity, or tell anyone this is or is not serious. If {caregiver_name} cannot go, or "
-        f"sounds unsure, tell them to call 911 directly — this device is not an emergency service "
-        f"and does not contact one.",
-        "",
-        f"Before ending, confirm out loud what they said they will do, give the callback number "
-        f"{callback_number}, and repeat it a second time slowly. Then thank them and end the call.",
-    ]
-    return "\n".join(lines)
+    return "\n".join(
+        [
+            f"URGENT. You are calling {caregiver_name}, the {relationship} of {person_name} and her "
+            f"emergency contact.",
+            "",
+            f'Say this first, before anything else: "This is an urgent alert about {person_name}. '
+            f'She has asked for help." People hang up on unknown numbers, so the reason has to land '
+            f"in the first few seconds.",
+            "",
+            "Then give only these facts:",
+            *[f"- {fact}" for fact in facts],
+            "",
+            "Then ask: can you get to her now, and how long will it take?",
+            "",
+            "If they ask ANYTHING not listed above — where she is, whether she is hurt or conscious, "
+            "what happened — do not guess and do not reassure them with invented detail. Ask the "
+            "operator system and relay exactly what it tells you. If it has nothing, say plainly "
+            "that we don't know.",
+            "",
+            "You are not a medical professional. Do not assess how serious this is. If they cannot "
+            "go, tell them to call 911.",
+            "",
+            f"Before ending: confirm what they said they will do, give the callback number "
+            f"{callback_number}, then end the call.",
+        ]
+    )
 
 
 def errand_brief(

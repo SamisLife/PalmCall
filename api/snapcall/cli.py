@@ -94,9 +94,8 @@ def cmd_emergency(client: CallwrightClient, args) -> int:
         client,
         contacts,
         person_name=demo_data.PERSON_NAME,
-        detected=demo_data.LIVE_CONTEXT["detected"],
-        location=demo_data.LIVE_CONTEXT["scene"],
         callback_number=demo_data.PROFILE["phone"],
+        known_facts=demo_data.TRIGGER_FACTS,
         answerer=_build_answerer(args.llm),
         on_event=_print_event,
     )
@@ -150,6 +149,12 @@ def main(argv: list[str] | None = None) -> int:
     common.add_argument("--live", action="store_true", help="actually dial. Without this, nothing rings.")
     common.add_argument("--llm", action="store_true", help="add the LLM rung to the answerer chain")
     common.add_argument("--to", help="target phone, E.164")
+    common.add_argument(
+        "--camera",
+        action="store_true",
+        help="simulate the ESP32 camera having captioned the scene. Without it the agent "
+        "knows only that she asked for help — which is the truth for a bare snap.",
+    )
 
     parser = argparse.ArgumentParser(prog="snapcall", parents=[common])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -174,6 +179,10 @@ def main(argv: list[str] | None = None) -> int:
     for name in ("business", "task", "brief"):
         if not hasattr(args, name):
             setattr(args, name, None)
+
+    if args.camera:
+        demo_data.simulate_camera()
+        print("camera context ON — the agent can describe the scene if asked.\n")
 
     dry_run = not args.live
     if not dry_run:
