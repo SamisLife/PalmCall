@@ -57,7 +57,7 @@ def emergency_brief(
         [
             f"This is an urgent alert about {person_name}. She has requested immediate assistance.",
             *facts,
-            "Can you get to her now, and how long will it take?",
+            "Can you get to her now?",
         ]
     )
 

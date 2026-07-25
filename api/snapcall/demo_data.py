@@ -29,17 +29,13 @@ PROFILE: dict[str, str] = {
     "doctor": "Dr. Amara Okafor",
 }
 
-# What a detected snap tells us, and the honest edges of it. Both lines answer
-# the question a caregiver actually asks — "what specifically?" — without
-# claiming anything the detector cannot support.
+# Empty on purpose. A caregiver getting this call needs to know one thing —
+# she asked for help, go — and every extra sentence is airtime between them and
+# that. Explaining how the detector works is for the product page, not the call.
 #
-# Whatever is in this list, the agent says on a real call to a real person.
-BASE_FACTS: list[str] = [
-    "She made the signal deliberately. It is a hand gesture she has to perform on purpose, "
-    "not an alarm going off on its own.",
-    "That signal is all the system can detect. It cannot tell us what is wrong, where she is, "
-    "or whether she is hurt.",
-]
+# The seam stays so real facts can be added later (a door sensor, a known room).
+# Whatever lands here, the agent says on a real call to a real person.
+BASE_FACTS: list[str] = []
 
 
 def trigger_facts() -> list[str]:
