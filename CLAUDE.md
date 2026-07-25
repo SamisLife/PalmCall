@@ -20,32 +20,43 @@ call layer to add a branch — add a brief builder.
 
 ## Layout
 
-The repo is split by subsystem. `api/` is the self-contained Python project —
-it has its own `pyproject.toml`, `.env`, and virtualenv. Wearable/firmware and
-dashboard code get their own sibling folders; they do not share this env.
+One Python project at the repo root. Vision and the call layer are the same
+program — the detector calls straight into the call flow — so they share a
+`pyproject.toml`, a `.env`, and a virtualenv.
 
 ```
-CLAUDE.md            this file — repo-wide, applies to every subsystem
-README.md
+CLAUDE.md            this file — repo-wide
+pyproject.toml       uv project root — run everything from here
+.env                 gitignored; the Callwright key lives here
 .claude/skills/
   callwright/        vendored upstream skill (the raw API reference)
   snapcall/          how to work in THIS repo
-api/                 the Callwright integration layer (Python)
-  pyproject.toml     uv project root — run commands from here
-  .env               gitignored; the key lives here
-  snapcall/
-    config.py        env loading + the dial allow-list (safety)
-    callwright.py    API client: place / follow / answer / result, outcomes
-    briefs.py        brief builders — emergency_brief, errand_brief
-    answerer.py      mid-call ask_user answering, as a fallback chain
-    flows.py         escalation ladder + end-to-end flows
-    trigger.py       the seam: snap in -> cancel window -> call out
-    server.py        POST /trigger endpoint + live dashboard
-    demo_data.py     fake persona (Margaret Chen) + what the device knows
-    cli.py           entry points
+snapcall/
+  config.py          env loading + the dial allow-list (safety)
+  callwright.py      API client: place / follow / answer / result, outcomes
+  briefs.py          brief builders — emergency_brief, errand_brief
+  answerer.py        mid-call ask_user answering, as a fallback chain
+  flows.py           escalation ladder + end-to-end flows
+  trigger.py         the seam: gesture in -> cancel window -> call out
+  server.py          POST /trigger endpoint + live dashboard
+  demo_data.py       persona + what the device actually knows
+  cli.py             entry points
+  vision/            laptop-side camera pipeline (opt-in extra)
+    detector.py      MediaPipe gesture recognition + alert state machine
+    stream_viewer.py MJPEG reader for the ESP32 /stream endpoint
+    dispatch.py      gesture -> TriggerHub (threaded, never blocks the camera)
+    models/          gesture_recognizer.task
 firmware/            ESP32 (Seeed XIAO ESP32S3 Sense) — Arduino sketch
-  snapcall_cam/      camera capture + WiFi server
+  snapcall_cam/      camera capture + MJPEG /stream server
     secrets.h        gitignored; WiFi creds. Copy secrets.example.h.
+```
+
+Vision deps (mediapipe, opencv) are an **optional extra** — they're large, and
+the call layer, dashboard and every dry run work without them:
+
+```sh
+uv sync                  # call layer only
+uv sync --extra vision   # + camera pipeline
 ```
 
 **The camera is a gesture detector, not an observer.** It is low resolution and
@@ -64,24 +75,27 @@ It never needs to know Callwright exists.
 
 ## Commands
 
-All Python commands run from `api/`:
+All from the repo root.
 
 ```sh
-cd api
-uv sync
-uv run python -m snapcall.cli preflight              # key alive? credits? connectivity?
-uv run python -m snapcall.cli emergency              # dry run by default
-uv run python -m snapcall.cli errand
+# the full demo: camera -> gesture -> call, with dashboard on :8787
+uv run python -m snapcall.vision.detector --address <esp32-ip>
+
+# no camera: HTTP endpoint + dashboard, fire with curl or the ESP32
+uv run python -m snapcall.cli serve
+
+# no camera, no network: ENTER is the gesture
+uv run python -m snapcall.cli listen
+
+# checks and one-shots
+uv run python -m snapcall.cli preflight     # key alive? credits? connectivity?
+uv run python -m snapcall.cli emergency
 uv run python -m snapcall.cli raw --to +1... --brief "..."
 ```
 
-Or from the repo root without changing directory:
-
-```sh
-uv run --directory api python -m snapcall.cli preflight
-```
-
-Add `--live` to actually dial. Add `--llm` to enable the LLM answerer rung.
+**Everything is a simulation unless you pass `--live`.** Dry run walks the whole
+state machine — including a mid-call question — without dialing or spending
+credits. `--llm` adds the LLM answerer rung.
 
 ## Safety rules — do not relax these
 

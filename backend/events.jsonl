@@ -1,2 +1,0 @@
-{"event": "snapcall_alert", "mode": "fake", "timestamp": "2026-07-25T03:57:30.665556+00:00", "alert_number": 1, "gesture": "Open_Palm", "gesture_score": 0.6422, "source": "http://172.20.10.2/stream"}
-{"event": "snapcall_alert", "mode": "fake", "timestamp": "2026-07-25T04:01:53.319676+00:00", "alert_number": 1, "gesture": "Open_Palm", "gesture_score": 0.7805, "source": "http://172.20.10.2/stream"}

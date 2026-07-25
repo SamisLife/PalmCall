@@ -1,0 +1,24 @@
+[project]
+name = "snapcall"
+version = "0.1.0"
+description = "Hand gesture -> real phone call. Vision detector + Callwright integration."
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.32",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+# Vision is opt-in: mediapipe and opencv are large, and the call layer, the
+# dashboard and every dry run work without them. Install with:
+#     uv sync --extra vision
+vision = [
+    "mediapipe>=0.10",
+    "opencv-python>=4.9",
+    "numpy>=1.26",
+]
+
+[tool.uv]
+# Virtual project: deps get installed, code runs from the repo root.
+# No build step, no editable install, nothing to explain at 9pm.
+package = false

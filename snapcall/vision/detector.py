@@ -21,7 +21,8 @@ import numpy as np
 import requests
 from mediapipe.tasks.python import vision
 
-from stream_viewer import (
+from .dispatch import dispatch
+from .stream_viewer import (
     FpsMeter,
     StreamDecodeError,
     iter_mjpeg_jpegs,
@@ -292,6 +293,12 @@ def parse_args() -> argparse.Namespace:
         default=15.0,
         help="timeout with no stream data in seconds (default: 15)",
     )
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        help="place REAL phone calls on detection. Without this every gesture "
+        "runs the full flow as a simulation and no phone rings.",
+    )
     return parser.parse_args()
 
 
@@ -423,10 +430,20 @@ def emit_fake_alert(
     gesture_name: str,
     gesture_score: float,
     alert_number: int,
+    live: bool = False,
 ) -> None:
+    """Log the detection, then hand it to the call layer.
+
+    The jsonl log stays — it is the record of what the detector actually saw,
+    independent of whether the call succeeded, and it is what you replay when
+    tuning thresholds.
+
+    `dispatch` returns immediately; the call runs on the hub's worker thread so
+    this never blocks the camera loop.
+    """
     event = {
         "event": "snapcall_alert",
-        "mode": "fake",
+        "mode": "live" if live else "dry",
         "timestamp": datetime.now(UTC).isoformat(),
         "alert_number": alert_number,
         "gesture": gesture_name,
@@ -436,9 +453,14 @@ def emit_fake_alert(
     with EVENT_LOG_PATH.open("a", encoding="utf-8") as log:
         log.write(json.dumps(event) + "\n")
 
+    action = dispatch(event, live=live)
+
     print("\n" + "=" * 62)
-    print("*** SNAPCALL ALERT TRIGGERED (FAKE CHANNEL) ***")
-    print(json.dumps(event, indent=2))
+    print(f"*** SNAPCALL ALERT — {gesture_name} ({gesture_score:.2f}) -> {action} ***")
+    if action == "armed":
+        print("    3s to cancel: repeat the gesture to abort")
+    elif action == "ignored_busy":
+        print("    a call is already in progress — ignored")
     print("=" * 62 + "\n")
 
 
@@ -561,6 +583,7 @@ def main() -> int:
                                 gesture_name,
                                 gesture_score,
                                 state_machine.alert_count,
+                                live=args.live,
                             )
                         elif state.cancelled:
                             print("Alert cancelled.")
