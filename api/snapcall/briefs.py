@@ -54,16 +54,21 @@ def emergency_brief(
             f"emergency contact.",
             "",
             f'Say this first, before anything else: "This is an urgent alert about {person_name}. '
-            f'She has asked for help." People hang up on unknown numbers, so the reason has to land '
-            f"in the first few seconds.",
+            f'She has requested immediate assistance." People hang up on unknown numbers, so the '
+            f"reason has to land in the first few seconds.",
             "",
-            "Then give only these facts:",
+            "Then, without waiting to be asked, give these facts:",
             *[f"- {fact}" for fact in facts],
             "",
             "Then ask: can you get to her now, and how long will it take?",
             "",
-            "If they ask ANYTHING not listed above — where she is, whether she is hurt or conscious, "
-            "what happened — do not guess and do not reassure them with invented detail. Ask the "
+            "If they ask what happened, what is wrong, or how serious it is: say honestly that we "
+            "do not know the nature of the emergency — only that she asked for help — and that this "
+            "is exactly why someone needs to go to her. Do not speculate about what might have "
+            "happened, and do not downplay it.",
+            "",
+            "If they ask anything else — where she is, whether she is moving, her address, her "
+            "medications — do not guess and do not reassure them with invented detail. Ask the "
             "operator system and relay exactly what it tells you. If it has nothing, say plainly "
             "that we don't know.",
             "",

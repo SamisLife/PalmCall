@@ -95,7 +95,7 @@ def cmd_emergency(client: CallwrightClient, args) -> int:
         contacts,
         person_name=demo_data.PERSON_NAME,
         callback_number=demo_data.PROFILE["phone"],
-        known_facts=demo_data.TRIGGER_FACTS,
+        known_facts=demo_data.trigger_facts(),
         answerer=_build_answerer(args.llm),
         on_event=_print_event,
     )

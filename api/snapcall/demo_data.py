@@ -21,10 +21,32 @@ PROFILE: dict[str, str] = {
     "doctor": "Dr. Amara Okafor",
 }
 
-# What a snap alone tells us: a request for help was made. Nothing more.
-# A gesture carries no location, no posture, no cause. Keep this list honest —
-# whatever is in it, the agent will say on a real phone call to a real person.
-TRIGGER_FACTS: list[str] = []
+# What a snap alone tells us. A gesture carries no location, no posture and no
+# cause — but the two facts below ARE things we know, and they're the ones a
+# caregiver needs when they ask "what specifically?". Saying she asked for help
+# and stopping there leaves them with nothing to act on.
+#
+# Keep this list honest: whatever is in it, the agent says on a real call to a
+# real person.
+BASE_FACTS: list[str] = [
+    "She made this request deliberately, with the band on her wrist. It is not an automatic "
+    "fall detection going off on its own.",
+    "The band tells us she needs help. It cannot tell us what is wrong.",
+]
+
+
+def trigger_facts() -> list[str]:
+    """Everything known AT THE TIME OF DIALING, camera included if it fired.
+
+    Front-loaded into the brief rather than held back for the answerer: a
+    caregiver should not have to interrogate an automated caller to find out
+    where the person is. The answerer still covers everything past this —
+    address, medications, whether she is still moving.
+    """
+    facts = list(BASE_FACTS)
+    if scene := LIVE_CONTEXT.get("scene"):
+        facts.append(scene)
+    return facts
 
 # Populated at RUNTIME, and only when a sensor actually produced something.
 # Starts empty on purpose: with just a snap we genuinely do not know where she
