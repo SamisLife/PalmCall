@@ -1,2 +1,29 @@
+# secrets — NEVER commit these
 firmware/snapcall_cam/secrets.h
+.env
+.env.local
+*.key
 
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# call logs may contain transcripts of real conversations
+calls/
+*.transcript.json
+
+# arduino / platformio build output
+.pio/
+build/
+*.elf
+*.bin
+
+# os / editor
+.DS_Store
+.idea/
+*.swp

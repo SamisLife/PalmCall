@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv run:*)",
+      "Bash(uv sync:*)",
+      "Bash(uv add:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(python3 -c:*)",
+      "Bash(curl -s -H \"X-API-Key: $CALLWRIGHT_API_KEY\" https://api.voygr.tech/v1/usage)",
+      "Bash(curl -s https://api.voygr.tech/health)"
+    ],
+    "deny": [
+      "Read(./.env)"
+    ]
+  }
+}
